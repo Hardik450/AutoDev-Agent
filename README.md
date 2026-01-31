@@ -99,11 +99,9 @@ Debug automatically
 
 Stop when successful
 
-##🖼️ Execution Screenshots
+```
+---
+<img width="901" height="635" alt="Screenshot 2026-01-31 102447" src="https://github.com/user-attachments/assets/3fe6a8f8-ddd9-4de8-811d-d8232ce33ff0" />
+<img width="858" height="657" alt="Screenshot 2026-01-31 102501" src="https://github.com/user-attachments/assets/50955b2a-dde5-4d27-9877-4b119e7b1989" />
 
 
-### 🔹 Planning & Code Generation
-![Planner and Code Generation](https://github.com/user-attachments/assets/d611c0b9-4196-42b4-bf80-66027cf05fa6)
-
-### 🔹 Execution & Evaluation Loop
-![Execution and Evaluation](https://github.com/user-attachments/assets/656c5d18-e307-4245-ace4-66d9b71b7286)
