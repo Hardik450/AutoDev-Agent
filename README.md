@@ -8,13 +8,13 @@ This project demonstrates **multi-step autonomous reasoning**, **tool use**, and
 
 ## 🚀 Features
 
-- 🧠 **Task Planning** – Breaks down a natural language task into actionable steps
-- ✍️ **Autonomous Code Generation** – Writes complete executable code
-- 🗂️ **Dynamic File Handling** – Chooses filenames automatically
-- ▶️ **Code Execution** – Runs generated code in the local environment
-- 🔁 **Self-Correction Loop** – Fixes errors based on execution output
-- ✅ **Task Evaluation** – Stops only when task objectives are satisfied
-- 🧩 **LangGraph-Based Workflow** – Explicit state transitions and control flow
+- 🧠 **Task Planning** – Breaks down a natural language task into actionable steps  
+- ✍️ **Autonomous Code Generation** – Writes complete executable code  
+- 🗂️ **Dynamic File Handling** – Chooses filenames automatically  
+- ▶️ **Code Execution** – Runs generated code in the local environment  
+- 🔁 **Self-Correction Loop** – Fixes errors based on execution output  
+- ✅ **Task Evaluation** – Stops only when task objectives are satisfied  
+- 🧩 **LangGraph-Based Workflow** – Explicit state transitions and control flow  
 
 ---
 
@@ -60,23 +60,23 @@ Evaluator ── SUCCESS → END
 - **LangGraph**
 - **LangChain**
 - **Google Gemini (via LangChain)**
-- **Subprocess (for execution)**
+- **Subprocess**
 - **dotenv**
 
 ---
 
 ## 📦 Tools Used
 
-- `write_file` – Writes generated code to disk
-- `read_file` – Reads file content
-- `run_shell` – Executes shell commands safely
+- `write_file` – Writes generated code to disk  
+- `read_file` – Reads file content  
+- `run_shell` – Executes shell commands safely  
 
 ---
 
 ## 🛠️ Installation
 
 ```bash
-git clone https://github.com/your-username/autodev-agent.git
+git clone https://github.com/hardik450/autodev-agent.git
 cd autodev-agent
 pip install -r requirements.txt
 Create a .env file:
@@ -86,20 +86,24 @@ GOOGLE_API_KEY=your_api_key_here
 Edit the task in initial_state:
 
 "task": "Create a Python script that fetches weather data and saves it to JSON."
-Run:
+Run the agent:
 
 python agent.py
 The agent will:
 
-generate code
+Generate code
 
-run it
+Execute it
 
-debug automatically
+Debug automatically
 
-stop when successful
+Stop when successful
+
+##🖼️ Execution Screenshots
 
 
-<img width="858" height="657" alt="Screenshot 2026-01-31 102501" src="https://github.com/user-attachments/assets/d611c0b9-4196-42b4-bf80-66027cf05fa6" />
-<img width="901" height="635" alt="Screenshot 2026-01-31 102447" src="https://github.com/user-attachments/assets/656c5d18-e307-4245-ace4-66d9b71b7286" />
+### 🔹 Planning & Code Generation
+![Planner and Code Generation](https://github.com/user-attachments/assets/d611c0b9-4196-42b4-bf80-66027cf05fa6)
 
+### 🔹 Execution & Evaluation Loop
+![Execution and Evaluation](https://github.com/user-attachments/assets/656c5d18-e307-4245-ace4-66d9b71b7286)
