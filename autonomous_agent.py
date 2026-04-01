@@ -38,7 +38,46 @@ def run_shell(command: str) -> str:
     except Exception as e:
         return f"Error during shell command execution: {str(e)}"
     
-tools = [write_file, read_file, run_shell]
+@tool
+def human_input(question: str) -> str:
+    """Ask the input from the user for the given question."""
+    try: 
+        print(f"\nAgent needs clarification:\n{question}")
+        answer = input("Your answer: ").strip()
+        return answer
+    except Exception as e:
+        print(e)
+
+tools = [write_file, read_file, run_shell, human_input]
+
+def get_user_clarification(task: str, model) -> str:
+    """
+    Run the clarifier LLM call and, if it emits human_input tool calls,
+    execute each one and collect the answers into the task context string.
+    Returns an enriched task string like:
+        "<original task>\n\nUser clarifications:\n- Q: ...\n  A: ..."
+    """
+    prompt = ChatPromptTemplate.from_messages([
+        ("system",
+         "You are a task analyst. Your job is to identify any missing information "
+         "that is required to complete the task. "
+         "If the task is fully self-contained, reply with exactly: NO_CLARIFICATION_NEEDED. "
+         "Otherwise, call the human_input tool ONCE for each piece of missing information. "
+         "Ask only for information that is genuinely required — not nice-to-have details."),
+        ("user", "Task: {task}")
+    ])
+    response = model.invoke(prompt.format_messages(task=task))
+    clarification_output=[]
+    if hasattr(response, "tool_calls") and response.tool_calls:
+        for tc in response.tool_calls:
+            if tc["name"] == "human_input":
+                question = tc["args"]["question"]
+                answer = human_input.invoke({"question": question})
+                clarification_output.append(f"Q:- {question}\nA:- {answer}")
+    if not clarification_output:
+        return task
+    enriched = task + "\n\nUser clarifications:\n" + "\n".join(clarification_output)
+    return enriched
 
 models = [
     ChatGoogleGenerativeAI(model="gemini-2.5-flash", google_api_key=os.getenv("GOOGLE_API_KEY")),
@@ -62,6 +101,7 @@ class Agent:
     def __init__(self, model, tools):
         self.model = model.bind_tools(tools)
         workflow = StateGraph(AutonomousAgentState)
+        workflow.add_node("clarifier", self.clarifier)
         workflow.add_node("planner", self.planner)
         workflow.add_node("coder", self.coder)
         workflow.add_node("executor", self.executor)
@@ -72,11 +112,12 @@ class Agent:
             self.controller,
             {"fixer": "fixer", END: END},
         )
+        workflow.add_edge("clarifier", "planner")
         workflow.add_edge("planner", "coder")
         workflow.add_edge("coder", "executor")   
         workflow.add_edge("fixer", "executor")
         workflow.add_edge("executor", "evaluator")
-        workflow.set_entry_point("planner")
+        workflow.set_entry_point("clarifier")
         self.workflow = workflow.compile()
     
     def _extract_content(self, response):
@@ -106,6 +147,11 @@ class Agent:
         response = self.model.invoke(prompt.format_messages(task=task))
         return {**state, "plan": self._extract_content(response), "messages": state["messages"]+[response]}
     
+    def clarifier(self, state: AutonomousAgentState) -> AutonomousAgentState:
+        task = state['task']
+        response = get_user_clarification(task, self.model)
+        return {**state, "task": response}
+    
     def coder(self, state: AutonomousAgentState) -> AutonomousAgentState:
         plan = state["plan"]
         prompt = ChatPromptTemplate.from_messages([
@@ -115,6 +161,9 @@ class Agent:
         ("user", 
          "Plan:\n{plan}\n\n"
          "Respond in the following format ONLY:\n"
+         """Respond ONLY with valid Python code.
+Do NOT include explanations, comments, or markdown.
+Output must strictly follow:"""
          "FILENAME: <filename>\n"
          "CODE:\n<code>")
     ])        
@@ -123,6 +172,8 @@ class Agent:
         parts = content.split("CODE:")
         if len(parts) < 2:
             raise ValueError(f"Response does not contain 'CODE:' marker. Response: {content}")
+        if "CODE:" not in content:
+            return {**state, "code": content, "file": "script.py"}
         filename_part = parts[0]
         file_path = filename_part.split("FILENAME:")[1].strip().split("\n")[0].strip() if "FILENAME:" in filename_part else "script.py"
         code = parts[1].strip()
@@ -165,7 +216,7 @@ class Agent:
 
 agent = Agent(llm, tools)
 initial_state: AutonomousAgentState = {
-    "task": "Create a Python script that fetches the IP address of the machine and saves it to a file named 'ip_address.txt'.",
+    "task": "Create a Python script that retrieves random jokes from an external API and saves them into a file named 'jokes.txt'.",
     "plan": "",
     "code": "",
     "file": "",
